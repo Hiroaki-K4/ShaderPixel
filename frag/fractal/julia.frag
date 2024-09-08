@@ -3,31 +3,29 @@ precision mediump float;
 #endif
 
 uniform vec2 u_resolution;
-int ITR=100;
+uniform float u_time;
 
-float julia(vec2 uv){
+float julia(vec2 uv, int max_iter){
 	int j=0;
-    // TODO Change shape gradually 
-    // ITR=ITR*int(floor(sin(u_time) * 0.5 + 0.5));
-    // ITR=ITR+floor(u_time);
-	for(int i=0;i<ITR;i++){
+	vec2 c=vec2(0.274,0.008);
+	// vec2 c=vec2(0.285,0.01);
+	// vec2 c=vec2(-0.70176,-0.3842);
+	for(int i=0;i<max_iter;i++){
 		j++;
-		// vec2 c=vec2(-0.345,0.654);
-        vec2 c=vec2(0.274,0.008);
-		// vec2 d=vec2(0.005,0.0);
 		uv=vec2(uv.x*uv.x-uv.y*uv.y,2.0*uv.x*uv.y)+c;
-		if(length(uv)>float(ITR)){
+		// Check for divergence
+		if(length(uv)>float(2)){
 			break;
 		}
 	}
-	return float(j)/float(ITR);
+	return float(j)/float(max_iter);
 }
 
 void main(){
 	vec2 uv=(2.0*gl_FragCoord.xy-u_resolution.xy)/u_resolution.y;
 
-	// uv*=abs(sin(iTime*0.2));
-	float f=julia(uv);
+	int max_iter = int(abs(sin(u_time*0.05)) * 100.0);
+	float f=julia(uv, max_iter);
 
 	gl_FragColor=vec4(vec3(f),1.0);
 }
