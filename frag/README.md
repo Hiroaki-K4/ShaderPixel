@@ -47,7 +47,7 @@ In Mandelbrot, the value of $c$ is determined by the coordinates. $z$ is initial
 You can draw Mandelbrot set by running the following command.
 
 ```bash
-glslViewer fractal/mandelbort.frag
+glslViewer fractal/mandelbrot.frag
 ```
 
 <img src="../images/mandelbrot.gif" width='400'>
