@@ -5,24 +5,25 @@ precision mediump float;
 uniform vec2 u_resolution;
 uniform float u_time;
 
-void sphereFold(inout vec3 z, inout float dz)
+void ballFold(inout vec3 z, inout float dz)
 {
-	float r2 = dot(z,z);
-	if (r2 < 0.5)
+	float z_sq = dot(z,z);
+    float z_sqrt = sqrt(z_sq);
+	if (z_sqrt < 0.5)
     { 
 		float temp = 2.0;
 		z *= temp;
 		dz*= temp;
 	}
-    else if (r2 < 1.0)
+    else if (z_sqrt < 1.0)
     { 
-		float temp = 1.0 / r2;
+		float temp = 1.0 / z_sq;
 		z *= temp;
 		dz*= temp;
 	}
 }
 
-void boxFold(inout vec3 z, inout float dz)
+void boxFold(inout vec3 z)
 {
 	z = clamp(z, -1.0, 1.0) * 2.0 - z;
 }
@@ -34,8 +35,10 @@ float mandelbox(vec3 z)
 	float dr = 1.0;
 	for (int n = 0; n < 10; n++)
     {
-		boxFold(z,dr);
-		sphereFold(z,dr);
+        // Fold the surrounding area around a 1*1*1 cube
+		boxFold(z);
+        // Fold around the ball
+        ballFold(z,dr);
         z = scale * z + offset;
         dr = dr * abs(scale) + 1.0;
 	}
@@ -43,21 +46,27 @@ float mandelbox(vec3 z)
 	return r / abs(dr);
 }
 
-float raymarcher( in vec3 ro, in vec3 rd )
+float raymarcher(in vec3 camPos, in vec3 rayDir)
 {
 	const float maxd = 50.0;
 	const float precis = 0.01;
     float h = precis*2.0;
     float t = 0.0;
 	float res = -1.0;
-    for( int i=0; i<100; i++ )
+    for(int i=0; i<100; i++)
     {
-        if( h<precis||t>maxd ) break;
-        h = mandelbox( ro+rd*t );
+        if (h<precis||t>maxd)
+        {
+            break;
+        }
+        h = mandelbox( camPos+rayDir*t );
         t += h * 1.0;
     }
 
-    if( t<maxd ) res = t;
+    if (t<maxd)
+    {
+        res = t;
+    }
     return res;
 }
 
@@ -132,11 +141,11 @@ mat3 calcLookAtMatrix(in vec3 camPos, in vec3 objPos)
     return mat3(camRight, camUp, camDir);
 }
 
-vec3 rayrender(vec3 pos, vec3 dir)
+vec3 rayrender(vec3 camPos, vec3 rayDir)
 {
 	vec3 col = vec3(0.0);
 
-	float dist = raymarcher(pos, dir);
+	float dist = raymarcher(camPos, rayDir);
 
     if (dist==-1.0)
     {
@@ -144,8 +153,8 @@ vec3 rayrender(vec3 pos, vec3 dir)
     }
     else
     {
-    	vec3 inters = pos + dist * dir;
-		col = material(inters, dir);
+    	vec3 inters = camPos + dist * rayDir;
+		col = material(inters, rayDir);
     }
 
     return col;
@@ -164,9 +173,9 @@ void main()
     mat3 camMat = calcLookAtMatrix(camPos, objPos);
 	// Transform the ray direction from the screen space to the world space
     // according to the camera's orientation
-    vec3 camdir = normalize(camMat * vec3(xy, 1.0));
+    vec3 rayDir = normalize(camMat * vec3(xy, 1.0));
 
-    vec3 col = rayrender(camPos, camdir);
+    vec3 col = rayrender(camPos, rayDir);
 
 	gl_FragColor = vec4(col, 1.0);
 }
