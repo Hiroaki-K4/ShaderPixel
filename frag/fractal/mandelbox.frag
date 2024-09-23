@@ -31,9 +31,12 @@ void boxFold(inout vec3 z)
 float mandelbox(vec3 z)
 {
     float scale = 2.0;
-	vec3 offset = z;
+	// vec3 offset = z;
+	vec3 offset = z * 1.6;
 	float dr = 1.0;
-	for (int n = 0; n < 10; n++)
+
+    int iter = int(15.0 * abs(sin(u_time*0.1)));
+	for (int n = 0; n < iter; n++)
     {
         // Fold the surrounding area around a 1*1*1 cube
 		boxFold(z);
@@ -46,7 +49,7 @@ float mandelbox(vec3 z)
 	return r / abs(dr);
 }
 
-float raymarcher(in vec3 camPos, in vec3 rayDir)
+float rayMarcher(in vec3 camPos, in vec3 rayDir)
 {
 	const float maxd = 50.0;
 	const float precis = 0.01;
@@ -60,9 +63,10 @@ float raymarcher(in vec3 camPos, in vec3 rayDir)
             break;
         }
         h = mandelbox( camPos+rayDir*t );
-        t += h * 1.0;
+        t += h;
     }
 
+    // Ray hit something
     if (t<maxd)
     {
         res = t;
@@ -70,7 +74,7 @@ float raymarcher(in vec3 camPos, in vec3 rayDir)
     return res;
 }
 
-vec3 normal( in vec3 pos )
+vec3 normal(in vec3 pos)
 {
     const float eps = 0.005;
 
@@ -85,7 +89,7 @@ vec3 normal( in vec3 pos )
 					  v4*mandelbox( pos + v4*eps ) );
 }
 
-float ambocc( in vec3 pos, in vec3 nor )
+float ambocc(in vec3 pos, in vec3 nor)
 {
 	float occ = 0.0;
     float sca = 1.0;
@@ -100,36 +104,35 @@ float ambocc( in vec3 pos, in vec3 nor )
     return clamp( 1.0 - 3.0*occ, 0.0, 1.0 );    
 }
 
-vec3 light( in vec3 lightdir, in vec3 lightcol, in vec3 tex, in vec3 norm, in vec3 camdir )
+vec3 light(in vec3 lightdir, in vec3 lightcol, in vec3 tex, in vec3 norm, in vec3 camdir)
 {    
     float cosa = pow(0.5 + 0.5*dot(norm, -lightdir),2.0);
     float cosr = max(dot(-camdir, reflect(lightdir, norm)), -0.0);
-    
+
     float diffuse = cosa;
     float phong = pow(cosr, 8.0);
-    
+
     return lightcol * (tex * diffuse + phong);
 }
 
-vec3 material( in vec3 pos , in vec3 camdir )
+vec3 material(in vec3 pos , in vec3 camdir)
 {    
 	vec3 norm = normal(pos);
-    
+
     vec3 d1 = -normalize(vec3(5.0,10.0,-20.0));
     vec3 d2 = -normalize(vec3(-5,10.0,20.0));
     vec3 d3 = -normalize(vec3(20,5.0,-5.0));
     vec3 d4 = -normalize(vec3(-20.0,5.0,5.0));
-	
+
     vec3 tex = vec3(0.2);
-    if (pos.y > -5.95) tex = vec3(0.32,0.28,0.0);
-    
+
     float ao = ambocc(pos, norm);
-    
-    vec3 l1 = light(d1, vec3(1.0,0.9,0.8), tex, norm, camdir);
-    vec3 l2 = light(d2, vec3(0.8,0.7,0.6), tex, norm, camdir);
-    vec3 l3 = light(d3, vec3(0.3,0.3,0.4), tex, norm, camdir);
-    vec3 l4 = light(d4, vec3(0.5,0.5,0.5), tex, norm, camdir);
-    
+
+    vec3 l1 = light(d1, vec3(1.0), tex, norm, camdir);
+    vec3 l2 = light(d2, vec3(1.0), tex, norm, camdir);
+    vec3 l3 = light(d3, vec3(1.0), tex, norm, camdir);
+    vec3 l4 = light(d4, vec3(1.0), tex, norm, camdir);
+
     return 0.5 * ao + 0.5 * (l1+l2+l3+l4);
 }
 
@@ -141,11 +144,11 @@ mat3 calcLookAtMatrix(in vec3 camPos, in vec3 objPos)
     return mat3(camRight, camUp, camDir);
 }
 
-vec3 rayrender(vec3 camPos, vec3 rayDir)
+vec3 rayRender(vec3 camPos, vec3 rayDir)
 {
 	vec3 col = vec3(0.0);
 
-	float dist = raymarcher(camPos, rayDir);
+	float dist = rayMarcher(camPos, rayDir);
 
     if (dist==-1.0)
     {
@@ -175,7 +178,7 @@ void main()
     // according to the camera's orientation
     vec3 rayDir = normalize(camMat * vec3(xy, 1.0));
 
-    vec3 col = rayrender(camPos, rayDir);
+    vec3 col = rayRender(camPos, rayDir);
 
 	gl_FragColor = vec4(col, 1.0);
 }
