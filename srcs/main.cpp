@@ -71,7 +71,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.01f;
+    const float sensitivity = 0.012f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
@@ -194,8 +194,8 @@ int main() {
     }
 
     // Build and compile our shader program
-    Shader shader("floor.vs", "floor.fs");
-    Shader skyboxShader("skybox.vs", "skybox.fs");
+    Shader shader("../shaders/floor.vs", "../shaders/floor.fs");
+    Shader skyboxShader("../shaders/skybox.vs", "../shaders/skybox.fs");
 
     float skyboxVertices[] = {
         // positions          
