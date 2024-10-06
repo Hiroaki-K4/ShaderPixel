@@ -71,7 +71,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.01f;
+    const float sensitivity = 0.012f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
@@ -194,11 +194,12 @@ int main() {
     }
 
     // Build and compile our shader program
-    Shader shader("floor.vs", "floor.fs");
-    Shader skyboxShader("skybox.vs", "skybox.fs");
+    Shader shader("../shaders/floor.vs", "../shaders/floor.fs");
+    Shader mandelboxShader("../shaders/mandelbox.vs", "../shaders/mandelbox.fs");
+    Shader skyboxShader("../shaders/skybox.vs", "../shaders/skybox.fs");
 
     float skyboxVertices[] = {
-        // positions          
+        // positions
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f,
@@ -252,6 +253,16 @@ int main() {
         5.0f, -0.5f, -5.0f,  2.0f, 2.0f								
     };
 
+    float quadVertices[] = {
+        -1.0f,  1.0f,
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+
+		-1.0f,  1.0f,
+		1.0f, -1.0f,
+		1.0f,  1.0f,
+    };
+
     // Position attribute
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -282,6 +293,18 @@ int main() {
     // Texture coordinate attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+
+    // Mandelbox VAO;
+    unsigned int mandelboxVAO, mandelboxVBO;
+    glGenVertexArrays(1, &mandelboxVAO);
+    glGenBuffers(1, &mandelboxVBO);
+    glBindVertexArray(mandelboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, mandelboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    // Position attribute
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
@@ -336,6 +359,17 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
 
+        // mandelbox
+        glDisable(GL_DEPTH_TEST);
+        mandelboxShader.use();
+        mandelboxShader.setVec2("u_resolution", glm::vec2(1200.0f, 900.0f)); // ウィンドウサイズに合わせて変更
+        mandelboxShader.setVec3fv("camPos", cameraPos);
+        mandelboxShader.setVec3fv("camFront", cameraFront);
+        glBindVertexArray(mandelboxVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        glEnable(GL_DEPTH_TEST);
+
         // Draw skybox as last
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
@@ -358,10 +392,12 @@ int main() {
     }
 
     // Optional: de-allocate all resources once they've outlived their purpose
-    glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteVertexArrays(1, &planeVAO);
-    glDeleteBuffers(1, &skyboxVBO);
+    glDeleteVertexArrays(1, &mandelboxVAO);
+    glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1, &planeVBO);
+    glDeleteBuffers(1, &mandelboxVBO);
+    glDeleteBuffers(1, &skyboxVBO);
     glfwTerminate();
 
     return 0;
