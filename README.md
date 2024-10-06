@@ -10,7 +10,7 @@ You can try various shaders by using glslViewer.
 glslViewer frag/fractal/julia.frag
 ```
 
-<img src="images/julia.gif" width='400'>
+<img src="images/julia.gif" width='600'>
 
 ## Mandelbrot
 
@@ -18,7 +18,7 @@ glslViewer frag/fractal/julia.frag
 glslViewer frag/fractal/mandelbrot.frag
 ```
 
-<img src="images/mandelbrot.gif" width='400'>
+<img src="images/mandelbrot.gif" width='600'>
 
 ## Mandelbox
 
@@ -26,7 +26,7 @@ glslViewer frag/fractal/mandelbrot.frag
 glslViewer frag/fractal/mandelbox.frag
 ```
 
-<img src="images/mandelbox.gif" width='400'>
+<img src="images/mandelbox.gif" width='600'>
 
 <br></br>
 
@@ -39,7 +39,7 @@ make
 ./shaderPixel
 ```
 
-<img src="images/mandelbox_on_sea.gif" width='400'>
+<img src="images/mandelbox_on_sea.gif" width='600'>
 
 
 <br></br>
