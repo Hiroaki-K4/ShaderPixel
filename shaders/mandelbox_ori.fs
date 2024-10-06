@@ -1,22 +1,22 @@
-#version 330 core
-out vec4 FragColor;
+#ifdef GL_ES
+precision mediump float;
+#endif
 
 uniform vec2 u_resolution;
-uniform vec3 camPos;
-uniform vec3 camFront;
+uniform float u_time;
 
 void ballFold(inout vec3 z, inout float dz)
 {
 	float z_sq = dot(z,z);
     float z_sqrt = sqrt(z_sq);
 	if (z_sqrt < 0.5)
-    {
+    { 
 		float temp = 2.0;
 		z *= temp;
 		dz*= temp;
 	}
     else if (z_sqrt < 1.0)
-    {
+    { 
 		float temp = 1.0 / z_sq;
 		z *= temp;
 		dz*= temp;
@@ -35,8 +35,8 @@ float mandelbox(vec3 z)
 	vec3 offset = z * 1.6;
 	float dr = 1.0;
 
-    // int iter = int(15.0 * abs(sin(u_time*0.1)));
-	for (int n = 0; n < 15; n++)
+    int iter = int(15.0 * abs(sin(u_time*0.1)));
+	for (int n = 0; n < iter; n++)
     {
         // Fold the surrounding area around a 1*1*1 cube
 		boxFold(z);
@@ -136,18 +136,12 @@ vec3 material(in vec3 pos , in vec3 camdir)
     return 0.5 * ao + 0.5 * (l1+l2+l3+l4);
 }
 
-// mat3 calcLookAtMatrix(in vec3 camPos, in vec3 objPos)
-mat3 calcLookAtMatrix()
+mat3 calcLookAtMatrix(in vec3 camPos, in vec3 objPos)
 {
-    // vec3 camDir = normalize(objPos - camPos);
-    // vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
-    // vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
-    // vec3 camUp = normalize(cross(camRight, camDir));
-    // return mat3(camRight, camUp, camDir);
-
-    vec3 camRight = normalize(cross(camFront, vec3(0.0, 1.0, 0.0)));
-    vec3 camUp = normalize(cross(camRight, camFront));
-    return mat3(camRight, camUp, camFront);
+    vec3 camDir = normalize(objPos - camPos);
+    vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
+    vec3 camUp = normalize(cross(camRight, camDir));
+    return mat3(camRight, camUp, camDir);
 }
 
 vec3 rayRender(vec3 camPos, vec3 rayDir)
@@ -171,19 +165,20 @@ vec3 rayRender(vec3 camPos, vec3 rayDir)
 
 void main()
 {
+    float t = u_time;
+
 	// Convert window coordinates to normalized screen coordinates
     vec2 xy = (gl_FragCoord.xy - u_resolution.xy/2.0) / max(u_resolution.xy.x, u_resolution.xy.y);
 
-    // vec3 camPos = vec3(3.0,1.0,3.0);
-    // vec3 objPos = vec3(0.0,0.0,0.0);
+    vec3 camPos = vec3(30.0,10.0,30.0);
+    vec3 objPos = vec3(0.0,0.0,0.0);
 
-    // mat3 camMat = calcLookAtMatrix(camPos, objPos);
-    mat3 camMat = calcLookAtMatrix();
+    mat3 camMat = calcLookAtMatrix(camPos, objPos);
 	// Transform the ray direction from the screen space to the world space
     // according to the camera's orientation
     vec3 rayDir = normalize(camMat * vec3(xy, 1.0));
 
     vec3 col = rayRender(camPos, rayDir);
 
-	FragColor = vec4(col, 1.0);
+	gl_FragColor = vec4(col, 1.0);
 }
